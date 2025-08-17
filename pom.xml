@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.harshit</groupId>
-	<artifactId>tldr</artifactId>
+	<artifactId>atslite-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>tldr</name>
 	<description>AI-Powered Article Summarization and Recommendation System</description>
@@ -84,6 +84,12 @@
 			<artifactId>jakarta.validation-api</artifactId>
 			<version>3.0.2</version> <!-- Use the latest appropriate version -->
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,6 +17,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+
+import java.util.List;
 
 
 @Configuration
@@ -36,7 +43,8 @@ public class SpringSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception{
         // Disable CSRF (not needed for stateless JWT)
-        httpSecurity.csrf(csrf -> csrf.disable())
+        httpSecurity.cors(Customizer.withDefaults()) //enable cors
+                .csrf(csrf -> csrf.disable())
 
                 // Configure endpoint authorization
                 .authorizeHttpRequests(auth -> auth
@@ -62,6 +70,19 @@ public class SpringSecurityConfig {
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+//        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source; // this works because it implements CorsConfigurationSource
     }
 
     /*
@@ -125,3 +146,43 @@ public class SpringSecurityConfig {
 // - Loads user data from the DB.
 // - Returns a UserDetails object for Spring Security.
 // - Password is compared using the PasswordEncoder.
+
+
+//🔹 1. The Request Lifecycle with Spring Security
+//Incoming request → passes through the Spring Security filter chain.
+//Your JWT filter (or any custom filter) may extract a token and put an Authentication object into the SecurityContextHolder.
+//SecurityContextHolder is a static container (per thread via ThreadLocal) that stores the current user’s authentication info for the request.
+//If your JWT is valid, you set:
+//        SecurityContextHolder.getContext().setAuthentication(authToken);
+//Now Spring knows “this request belongs to user X with roles Y,Z”.
+//Once filter chain finishes, the request moves into Spring MVC DispatcherServlet and eventually to your controller.
+//Yes, Spring Security auto-checks if a URL (or controller method) requires authentication by looking at the SecurityContext
+// that your filter populated. If no authentication is present → blocked before hitting the controller.
+
+//➡️ Request comes in
+//    |
+//v
+//[ JWT Filter runs ]
+//        |
+//        |-- Does request have "Authorization: Bearer <token>"?
+//        |       |
+//        |       ├── Yes → Validate token
+//    |       |        |
+//            |       |        ├── Valid → Extract username, roles →
+//        |       |        |             Create Authentication → put in SecurityContext
+//    |       |        |
+//            |       |        └── Invalid/Expired → (optionally return 401)
+//        |       |
+//        |       └── No → Continue with anonymous user
+//    |
+//v
+//[ Spring Security URL Matchers ]
+//        |
+//        ├── permitAll() → allowed (even if no auth)
+//    |
+//            ├── authenticated() → allowed only if SecurityContext has user
+//    |
+//            └── hasRole("X") → allowed only if SecurityContext has user with that role
+//    |
+//v
+//➡️ Controller executes (or request blocked with 401/403)
