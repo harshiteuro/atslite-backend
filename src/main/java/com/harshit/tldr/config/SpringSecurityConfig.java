@@ -72,6 +72,15 @@ public class SpringSecurityConfig {
         return httpSecurity.build();
     }
 
+//    CORS (Cross-Origin Resource Sharing) is a browser security mechanism that controls how resources (APIs, fonts, data, etc.)
+//    can be requested from a domain different from the one the page was loaded from.
+//    Same-Origin Policy: By default, browsers block requests between different domains (e.g., app.com trying to call api.com).
+//    CORS Headers: The server can allow it by sending special headers, like:
+//    Access-Control-Allow-Origin: https://app.com (or * for all).
+//    Access-Control-Allow-Methods: GET, POST, ...
+//    Access-Control-Allow-Headers: Content-Type, Authorization
+//    Preflight Requests: For certain methods (like POST, PUT), browsers first send an OPTIONS request to check if the server allows it.
+//    👉 In short: CORS is a server’s way of telling the browser which cross-origin requests are safe to allow.
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
