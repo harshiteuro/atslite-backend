@@ -7,6 +7,7 @@ import com.theokanning.openai.service.OpenAiService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -14,7 +15,7 @@ public class OpenAiLlm {
     private final OpenAiService openAiService;
 
     public OpenAiLlm(@Value("${openai.api.key}") String apiKey) {
-        this.openAiService = new OpenAiService(apiKey);
+        this.openAiService = new OpenAiService(apiKey, Duration.ofSeconds(60));
     }
 
     public String analyzeUsingOpenAi(String model, String prompt) {
