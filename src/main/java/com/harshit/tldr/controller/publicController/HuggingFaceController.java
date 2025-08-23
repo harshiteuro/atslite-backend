@@ -17,6 +17,12 @@ public class HuggingFaceController {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    private final OpenAiLlm openAiLlm;
+
+    public HuggingFaceController(OpenAiLlm openAiLlm) {
+        this.openAiLlm = openAiLlm;
+    }
+
     @PostMapping("/analyse")
     public ResponseEntity<?> evaluateResume(@RequestBody AnalysisRequest request){
         // Build the ATS analysis prompt
@@ -24,6 +30,12 @@ public class HuggingFaceController {
                 "Resume:\n" + request.getResumeContent() + "\n\n" +
                 "Job Description:\n" + request.getJobDescription() + "\n\n" +
                 "Provide ATS score (0-100) and explain strengths and weaknesses.";
+
+
+        if(request.getModel().equals("gpt-4o-mini")){
+            String res= openAiLlm.analyzeUsingOpenAi(request.getModel(),prompt);
+            return new ResponseEntity<>(res,HttpStatus.OK);
+        }
 
         // Create request body for external API
         ChatRequest chatRequest = new ChatRequest(
